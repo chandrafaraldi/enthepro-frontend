@@ -2,16 +2,19 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Form, Button } from "react-bootstrap";
 import Swal from "sweetalert2";
-import api from "../utils/api";
+import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
 
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
@@ -19,31 +22,42 @@ export default function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     setErrors({});
+    setIsSubmitting(true);
 
     try {
-      const response = await api.post("/login", formData);
-      localStorage.setItem("token", response.data.token);
-      localStorage.setItem("user", JSON.stringify(response.data.data));
-      Swal.fire({
-        icon: "success",
-        title: "Success Login",
-        text: response.data?.message || "Selamat Datang",
-        timer: 2000,
-        showConfirmButton: false,
-      });
-      navigate("/home");
-    } catch (error) {
-      if (error.response && error.response.status === 422) {
-        setErrors(error.response.data?.errors);
-      } else if (error.response.status === 401) {
+      const response = await login(formData.email, formData.password);
+
+      if (response.success) {
         Swal.fire({
-          icon: "error",
-          title: "Login Gagal!",
-          text: "Email atau password salah.",
+          icon: "success",
+          title: "Login Berhasil",
+          text: "Selamat Datang!",
           timer: 1500,
           showConfirmButton: false,
         });
+        navigate("/home");
+      } else {
+        // Error handling as per AuthContext return
+        if (typeof response.message === 'object') {
+           setErrors(response.message);
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Login Gagal!",
+            text: response.message || "Email atau password salah.",
+            timer: 1500,
+            showConfirmButton: false,
+          });
+        }
       }
+    } catch (error) {
+       Swal.fire({
+        icon: "error",
+        title: "Kesalahan",
+        text: "Terjadi kesalahan pada server.",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

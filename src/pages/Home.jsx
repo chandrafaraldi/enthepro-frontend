@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import {
   MdFavoriteBorder,
   MdFavorite,
@@ -15,14 +16,17 @@ import { Spinner, Form, Button, Dropdown, Modal } from "react-bootstrap";
 import api from "../utils/api";
 import Swal from "sweetalert2";
 
+import { useAuth } from "../context/AuthContext";
+
 export default function Home() {
+  const { user } = useAuth();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [btnLoading, setBtnLoading] = useState(false);
   const [caption, setCaption] = useState("");
 
-  // Current User for protection
-  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+  // Use AuthContext user as current user
+  const currentUser = user || {};
 
   // File states for "Create Post"
   const [image, setImage] = useState(null);
@@ -359,196 +363,103 @@ export default function Home() {
 
   return (
     <>
-      {/* --- FORM BUAT POST --- */}
-      <div className="create-post-card shadow-sm border-0">
-        <Form onSubmit={handleCreatePost}>
-          <div className="d-flex align-items-start gap-3">
-            <img
-              src={defaultAvatar(currentUser.name || "me")}
-              alt="my-avatar"
-              className="post-avatar mt-1"
-            />
-            <div className="flex-grow-1">
-              <Form.Control
-                as="textarea"
-                rows={1}
-                className="bg-light border-0 px-3 py-2"
-                style={{ borderRadius: "20px", resize: "none" }}
-                placeholder="Apa yang Anda pikirkan?"
-                value={caption}
-                onChange={(e) => setCaption(e.target.value)}
-                disabled={btnLoading}
-              />
+      {/* Inline Create Post box removed - Using global FAB in MainLayout Instead */}
 
-              {/* Preview lampiran di Create Post */}
-              {(imagePreview || file) && (
-                <div className="mt-3 position-relative bg-light p-2 rounded border border-dashed text-center">
-                  <Button
-                    variant="dark"
-                    size="sm"
-                    className="position-absolute top-0 end-0 m-1 rounded-circle p-1"
-                    style={{ zIndex: 5, width: "24px", height: "24px" }}
-                    onClick={clearAttachments}
-                  >
-                    <MdClose size={16} />
-                  </Button>
-                  {imagePreview && (
-                    <img
-                      src={imagePreview}
-                      alt="preview"
-                      className="rounded"
-                      style={{ maxHeight: "200px", maxWidth: "100%" }}
-                    />
-                  )}
-                  {file && (
-                    <div className="d-flex align-items-center justify-content-center gap-2 p-3 bg-white rounded border mx-auto" style={{ maxWidth: '300px' }}>
-                      <MdAttachFile className="text-success" size={28} />
-                      <div className="text-start">
-                        <div className="small fw-bold text-truncate" style={{ maxWidth: '200px' }}>{file.name}</div>
-                        <div className="text-muted" style={{ fontSize: '10px' }}>Lampiran siap diunggah</div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
-                <div className="d-flex gap-1">
-                  <input
-                    type="file"
-                    id="imageInput"
-                    accept="image/*"
-                    hidden
-                    onChange={handleImageChange}
-                  />
-                  <Button
-                    variant="light"
-                    className="rounded-circle p-2 text-primary border-0"
-                    onClick={() => document.getElementById("imageInput").click()}
-                  >
-                    <MdImage size={22} />
-                  </Button>
-
-                  <input
-                    type="file"
-                    id="fileInput"
-                    hidden
-                    onChange={handleFileChange}
-                  />
-                  <Button
-                    variant="light"
-                    className="rounded-circle p-2 text-success border-0"
-                    onClick={() => document.getElementById("fileInput").click()}
-                  >
-                    <MdAttachFile size={22} />
-                  </Button>
-                </div>
-
-                <Button
-                  type="submit"
-                  variant="primary"
-                  className="rounded-pill px-4 fw-bold"
-                  disabled={btnLoading || (!caption.trim() && !image && !file)}
-                >
-                  {btnLoading ? <Spinner size="sm" /> : "Post"}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </Form>
-      </div>
-
-      {/* --- LIST POSTINGAN --- */}
-      <div className="posts-list mt-4">
+      {/* --- FEED POSTINGAN --- */}
+      <div className="posts-list">
         {loading ? (
           <div className="text-center py-5">
             <Spinner animation="border" variant="primary" />
-            <p className="mt-2 text-muted">Memuat postingan...</p>
+            <p className="mt-2 text-muted">Menyelaraskan feed...</p>
           </div>
         ) : posts.length > 0 ? (
           posts.map((post) => (
-            <div key={post.id} className="post-card mb-3 shadow-sm border-light">
-              <div className="post-header border-0 d-flex justify-content-between align-items-center">
-                <div className="post-user d-flex align-items-center gap-2">
+            <div key={post.id} className="post-card">
+              <div className="post-left">
+                <Link to={`/user/${post.user?.username}`}>
                   <img
-                    src={
-                      post.user?.profile_photo ||
-                      defaultAvatar(post.user?.username || post.id)
-                    }
+                    src={post.user?.profile_photo_url || defaultAvatar(post.user?.username || post.id)}
                     alt={post.user?.name}
                     className="post-avatar"
                   />
-                  <div className="d-flex flex-column">
-                    <span className="fw-bold">{post.user?.name || "Anonim"}</span>
-                    <span className="text-muted small">@{post.user?.username}</span>
+                </Link>
+              </div>
+              
+              <div className="post-right w-100">
+                <div className="d-flex justify-content-between align-items-start">
+                  <div className="post-header-info align-items-center">
+                    <Link to={`/user/${post.user?.username}`} className="text-decoration-none d-flex align-items-center gap-2">
+                      <span className="post-display-name text-white fw-bold">{post.user?.name || "Member SysMedia"}</span>
+                      <span className="post-username opacity-50 small">@{post.user?.username}</span>
+                    </Link>
+                    <span className="post-dot opacity-50">·</span>
+                    <span className="post-time opacity-50">{formatDate(post.created_at)}</span>
+                  </div>
+
+                  {(post.user_id === currentUser.id || currentUser.is_admin) && (
+                    <Dropdown align="end">
+                      <Dropdown.Toggle as="button" className="post-action-btn border-0 bg-transparent p-1 text-muted">
+                        <MdMoreHoriz size={20} />
+                      </Dropdown.Toggle>
+                      <Dropdown.Menu className="bg-dark border-secondary shadow-lg rounded-4 overflow-hidden" style={{ background: '#1e293b' }}>
+                        {post.user_id === currentUser.id && (
+                          <Dropdown.Item className="text-white small py-2 d-flex align-items-center gap-3" onClick={() => openEditModal(post)}>
+                            <MdEdit size={18} className="text-primary" /> Edit Post
+                          </Dropdown.Item>
+                        )}
+                        <Dropdown.Item className="text-danger small py-2 d-flex align-items-center gap-3" onClick={() => handleDeletePost(post.id)}>
+                          <MdDelete size={18} /> Hapus Permanen
+                        </Dropdown.Item>
+                      </Dropdown.Menu>
+                    </Dropdown>
+                  )}
+                </div>
+
+                <div className="post-caption">{post.caption}</div>
+
+                {post.image_url && (
+                  <div className="post-media shadow-sm">
+                    <img src={post.image_url} alt="post-img" className="img-fluid" />
+                  </div>
+                )}
+
+                {post.file_url && (
+                  <div className="mt-3">
+                    <a href={post.file_url} target="_blank" rel="noreferrer" className="d-flex align-items-center gap-3 p-3 bg-white bg-opacity-5 rounded-4 border border-secondary text-decoration-none text-white transition-all hover:bg-opacity-10">
+                      <div className="p-2 bg-primary bg-opacity-20 rounded-3">
+                        <MdAttachFile size={22} className="text-primary" />
+                      </div>
+                      <div className="overflow-hidden">
+                         <div className="fw-bold small text-truncate">Unduh Lampiran</div>
+                         <div className="text-muted" style={{ fontSize: '11px' }}>Tersedia dokumen pendukung</div>
+                      </div>
+                    </a>
+                  </div>
+                )}
+
+                <div className="post-actions-row">
+                  <div className="action-item" onClick={() => openCommentModal(post)}>
+                    <MdChatBubbleOutline size={20} />
+                    <span>{post.comments_count || 0}</span>
+                  </div>
+                  
+                  <div className="action-item" onClick={() => handleLike(post.id)} style={{ color: post.is_liked ? "var(--sys-primary)" : "inherit" }}>
+                    {post.is_liked ? <MdFavorite size={20} /> : <MdFavoriteBorder size={20} />}
+                    <span>{post.likes_count || 0}</span>
+                  </div>
+
+                  <div className="action-item">
+                    <MdSend size={20} className="opacity-50" />
+                    <span>Share</span>
                   </div>
                 </div>
-
-                {/* Dropdown Menu (Hanya muncul jika pemilik/admin) */}
-                {(post.user_id === currentUser.id || currentUser.is_admin) && (
-                  <Dropdown align="end">
-                    <Dropdown.Toggle as="button" className="post-action-btn border-0 bg-transparent p-0">
-                      <MdMoreHoriz size={24} />
-                    </Dropdown.Toggle>
-                    <Dropdown.Menu className="shadow border-0 rounded-3">
-                      {post.user_id === currentUser.id && (
-                        <Dropdown.Item className="small py-2 d-flex align-items-center gap-2" onClick={() => openEditModal(post)}>
-                          <MdEdit className="text-primary" size={18} /> Ubah
-                        </Dropdown.Item>
-                      )}
-                      <Dropdown.Item className="small py-2 d-flex align-items-center gap-2 text-danger" onClick={() => handleDeletePost(post.id)}>
-                        <MdDelete size={18} /> Hapus
-                      </Dropdown.Item>
-                    </Dropdown.Menu>
-                  </Dropdown>
-                )}
               </div>
-
-              <div className="post-content px-3 py-2">{post.caption}</div>
-
-              {post.image_url && (
-                <div className="post-media mb-2 text-center bg-gray-50 border-y py-1">
-                  <img src={post.image_url} alt="post-img" className="img-fluid" style={{ maxHeight: "400px" }} />
-                </div>
-              )}
-
-              {/* Tampilkan Link File jika ada */}
-              {post.file_url && (
-                <div className="px-3 pb-3">
-                  <a
-                    href={post.file_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="d-flex align-items-center gap-2 p-2 bg-light rounded text-decoration-none text-dark border"
-                  >
-                    <MdAttachFile className="text-primary" size={20} />
-                    <span className="small fw-semibold">Lihat Lampiran (File)</span>
-                  </a>
-                </div>
-              )}
-
-              <div className="post-actions px-3 mt-2 border-0 d-flex gap-3">
-                <button
-                  className="post-action-btn border-0 bg-transparent p-0"
-                  style={{ color: post.is_liked ? "#ef4444" : "inherit" }}
-                  onClick={() => handleLike(post.id)}
-                >
-                  {post.is_liked ? <MdFavorite size={24} /> : <MdFavoriteBorder size={24} />}
-                </button>
-                <button className="post-action-btn border-0 bg-transparent p-0" onClick={() => openCommentModal(post)}>
-                  <MdChatBubbleOutline size={22} />
-                  <span className="ms-1 small">{post.comments_count || 0}</span>
-                </button>
-              </div>
-
-              <div className="post-likes px-3 mt-1 small fw-bold">{post.likes_count || 0} Suka</div>
-              <div className="post-time px-3 text-muted mt-2 mb-3" style={{ fontSize: "11px" }}>{formatDate(post.created_at)}</div>
             </div>
           ))
         ) : (
-          <div className="text-center py-5 text-muted bg-white rounded shadow-sm border">
-            <h5>Belum ada postingan</h5>
-            <p>Jadilah yang pertama untuk berbagi cerita!</p>
+          <div className="text-center py-5 opacity-50">
+            <h5 className="fw-bold text-white mb-2">Feed Masih Kosong</h5>
+            <p>Jadilah pendobrak pertama dengan memposting sesuatu!</p>
           </div>
         )}
       </div>
@@ -631,7 +542,7 @@ export default function Home() {
                comments.map(comment => (
                  <div key={comment.id} className="d-flex align-items-start gap-2 mb-3">
                     <img 
-                      src={comment.user?.profile_photo || defaultAvatar(comment.user?.username)} 
+                      src={comment.user?.profile_photo_url || defaultAvatar(comment.user?.username)} 
                       className="rounded-circle" width="32" height="32" 
                       alt="avatar" 
                     />

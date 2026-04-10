@@ -1,26 +1,42 @@
-import { Outlet } from 'react-router-dom'
+import { useState } from 'react'
+import { Outlet, useNavigate } from 'react-router-dom'
 import Sidebar from '../components/Sidebar'
+import BackgroundStars from '../components/BackgroundStars'
+import CreatePostFAB from '../components/CreatePostFAB'
+import CreatePostModal from '../components/CreatePostModal'
+import { MdSearch, MdTrendingUp, MdStars } from 'react-icons/md'
 
 export default function MainLayout() {
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const navigate = useNavigate();
+
+  const handlePostSuccess = () => {
+    // If we are on home page, we might want to refresh feeds
+    // For now, simple success handling
+    if (window.location.pathname === '/' || window.location.pathname === '/home') {
+       window.location.reload(); // Simple refresh for now to update feeds
+    }
+  };
+
   return (
     <div className="app-container">
+      <BackgroundStars />
       <Sidebar />
-      <div className="main-content">
-        <div className="feed-container">
-          <Outlet />
+      
+      <main className="main-content">
+        <div className="tab-sticky-header">
+           <h5 className="m-0 fw-bold">Beranda</h5>
         </div>
-        {/* Right Panel for suggestions (only visible on large screens) */}
-        <div className="right-panel">
-          <div className="glass-card">
-            <div className="glass-card-header">
-              <h6 className="m-0 fw-bold">Saran untuk Anda</h6>
-            </div>
-            <div className="glass-card-body pt-3">
-              <p className="text-muted small">Fitur saran teman akan muncul di sini</p>
-            </div>
-          </div>
-        </div>
-      </div>
+        <Outlet />
+      </main>
+
+      <CreatePostFAB onClick={() => setShowCreateModal(true)} />
+      
+      <CreatePostModal 
+        show={showCreateModal} 
+        onHide={() => setShowCreateModal(false)}
+        onSuccess={handlePostSuccess}
+      />
     </div>
   )
 }
