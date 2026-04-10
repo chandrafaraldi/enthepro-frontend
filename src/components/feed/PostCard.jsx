@@ -20,7 +20,7 @@ const PostCard = ({ post }) => {
   // Map backend fields to frontend logic
   const postUser = post.user || {};
   const isOwner = user?.id === postUser.id;
-  const isGodMode = user?.id === 1; // Admin God Mode Privilege
+  const isGodMode = user?.is_admin; // Unified Admin Privilege
   const canModify = isOwner || isGodMode;
   
   // Likes handling - assuming post.likes is an array of user objects or IDs

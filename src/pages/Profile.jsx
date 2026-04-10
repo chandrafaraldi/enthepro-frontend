@@ -28,6 +28,8 @@ export default function Profile() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName] = useState("");
   const [editBio, setEditBio] = useState("");
+  const [editLocation, setEditLocation] = useState("");
+  const [editWebsite, setEditWebsite] = useState("");
   const [editPassword, setEditPassword] = useState("");
   const [editPasswordConfirm, setEditPasswordConfirm] = useState("");
   const [editAvatar, setEditAvatar] = useState(null);
@@ -44,7 +46,7 @@ export default function Profile() {
   const fetchProfile = async () => {
     setLoading(true);
     try {
-      const url = isMe ? "/profile" : `/users/${paramUsername}`;
+      const url = isMe ? `/profile?tab=${activeTab}` : `/users/${paramUsername}?tab=${activeTab}`;
       const res = await api.get(url);
       const resData = res.data.data;
 
@@ -56,6 +58,8 @@ export default function Profile() {
         const userData = resData.user || resData;
         setEditName(userData.name || "");
         setEditBio(userData.bio || "");
+        setEditLocation(userData.location || "");
+        setEditWebsite(userData.website || "");
       }
     } catch (error) {
       console.error("Fetch Profile Error:", error);
@@ -97,7 +101,7 @@ export default function Profile() {
 
   useEffect(() => {
     fetchProfile();
-  }, [paramUsername]);
+  }, [paramUsername, activeTab]);
 
   const handleFollow = async () => {
     try {
@@ -114,6 +118,33 @@ export default function Profile() {
     }
   };
 
+  const handleToggleBlock = async () => {
+    const action = user?.is_blocked ? "Buka blokir" : "Blokir";
+    const res = await Swal.fire({
+      title: `${action} User?`,
+      text: `Apakah Anda yakin ingin ${action.toLowerCase()} user ini?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: user?.is_blocked ? "#10b981" : "#ef4444",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: `Ya, ${action}!`,
+      cancelButtonText: "Batal",
+      background: "#1e1e1e",
+      color: "#fff",
+    });
+
+    if (res.isConfirmed) {
+      try {
+        await api.post(`/admin/users/${user.id}/toggle-block`);
+        Swal.fire("Berhasil", `User telah ${user?.is_blocked ? 'dibuka blokirnya' : 'diblokir'}.`, "success");
+        fetchProfile();
+      } catch (error) {
+        console.error("Toggle Block Error:", error);
+        Swal.fire("Gagal", "Terjadi kesalahan saat memproses permintaan.", "error");
+      }
+    }
+  };
+
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     setIsUpdating(true);
@@ -121,6 +152,8 @@ export default function Profile() {
     const formData = new FormData();
     formData.append("name", editName);
     formData.append("bio", editBio);
+    formData.append("location", editLocation);
+    formData.append("website", editWebsite);
     // Align with backend rename: profile_photo
     if (editAvatar) formData.append("profile_photo", editAvatar);
     if (editPassword) {
@@ -214,6 +247,15 @@ export default function Profile() {
               {isFollowing ? "Mengikuti" : "Ikuti"}
             </Button>
          )}
+         {currentUser?.is_admin && !isMe && (
+            <Button 
+              variant={user?.is_blocked ? "success" : "danger"} 
+              className="rounded-pill fw-bold ms-2 px-4 shadow-sm"
+              onClick={handleToggleBlock}
+            >
+              {user?.is_blocked ? "Buka Blokir" : "Blokir User"}
+            </Button>
+         )}
       </div>
 
       {/* Profile Info */}
@@ -224,12 +266,18 @@ export default function Profile() {
          <p className="mt-3 text-white-50">{user?.bio || "Belum ada bio."}</p>
 
          <div className="d-flex flex-wrap gap-3 mt-3 text-muted small">
-            <div className="d-flex align-items-center gap-1">
-               <MdLocationOn /> <span>Indonesia</span>
-            </div>
-            <div className="d-flex align-items-center gap-1">
-               <MdLink /> <a href="#" className="text-primary text-decoration-none">sysmedia.io</a>
-            </div>
+            {user?.location && (
+              <div className="d-flex align-items-center gap-1">
+                 <MdLocationOn /> <span>{user.location}</span>
+              </div>
+            )}
+            {user?.website && (
+              <div className="d-flex align-items-center gap-1">
+                 <MdLink /> <a href={user.website.startsWith('http') ? user.website : `https://${user.website}`} target="_blank" rel="noopener noreferrer" className="text-primary text-decoration-none">
+                   {user.website.replace(/^https?:\/\//, '')}
+                 </a>
+              </div>
+            )}
             <div className="d-flex align-items-center gap-1">
                <MdCalendarMonth /> <span>Bergabung {new Date(user?.created_at).toLocaleDateString("id-ID", { month: 'long', year: 'numeric' })}</span>
             </div>
@@ -346,7 +394,34 @@ export default function Profile() {
                 />
              </Form.Group>
 
-             <hr className="border-secondary opacity-10 my-4" />
+             <div className="row">
+               <div className="col-md-6">
+                  <Form.Group className="mb-3">
+                     <Form.Label className="small text-muted">Lokasi</Form.Label>
+                     <Form.Control 
+                       type="text" 
+                       value={editLocation}
+                       onChange={(e) => setEditLocation(e.target.value)}
+                       placeholder="Kota, Negara"
+                       className="bg-transparent border-secondary text-white shadow-none"
+                     />
+                  </Form.Group>
+               </div>
+               <div className="col-md-6">
+                  <Form.Group className="mb-3">
+                     <Form.Label className="small text-muted">Website</Form.Label>
+                     <Form.Control 
+                       type="text" 
+                       value={editWebsite}
+                       onChange={(e) => setEditWebsite(e.target.value)}
+                       placeholder="https://..."
+                       className="bg-transparent border-secondary text-white shadow-none"
+                     />
+                  </Form.Group>
+               </div>
+            </div>
+
+            <hr className="border-secondary opacity-10 my-4" />
              <h6 className="small fw-bold text-white-50 mb-3">Keamanan</h6>
 
              <Form.Group className="mb-3">

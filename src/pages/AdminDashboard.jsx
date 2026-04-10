@@ -5,7 +5,9 @@ import {
   MdComment, 
   MdDelete,
   MdBarChart,
-  MdManageAccounts
+  MdManageAccounts,
+  MdBlock,
+  MdCheckCircle
 } from "react-icons/md";
 import { Spinner, Table, Button, Card, Row, Col } from "react-bootstrap";
 import api from "../utils/api";
@@ -207,17 +209,33 @@ export default function AdminDashboard() {
                          <div className="small text-muted">@{u.username}</div>
                       </td>
                       <td className="text-white-50">{u.email}</td>
-                      <td>
-                         <span className={`badge ${u.is_admin ? 'bg-warning text-dark' : 'bg-secondary text-white-50'}`}>
-                            {u.is_admin ? 'Admin' : 'User'}
-                         </span>
-                      </td>
+                       <td>
+                          <div className="d-flex flex-column gap-1">
+                             <span className={`badge ${u.is_admin ? 'bg-warning text-dark' : 'bg-secondary text-white-50'}`}>
+                                {u.is_admin ? 'Admin' : 'User'}
+                             </span>
+                             {u.is_blocked && (
+                                <span className="badge bg-danger text-white">Terblokir</span>
+                             )}
+                          </div>
+                       </td>
                       <td className="text-white-50">{new Date(u.created_at).toLocaleDateString()}</td>
-                      <td>
-                         <Button variant="outline-danger" size="sm" onClick={() => handleDeleteUser(u.id)} disabled={u.is_admin}>
-                            <MdDelete size={16} />
-                         </Button>
-                      </td>
+                       <td>
+                          <div className="d-flex gap-2">
+                             <Button 
+                               variant={u.is_blocked ? "outline-success" : "outline-warning"} 
+                               size="sm" 
+                               onClick={() => handleToggleBlock(u)}
+                               disabled={u.is_admin}
+                               title={u.is_blocked ? "Buka Blokir" : "Blokir"}
+                             >
+                               {u.is_blocked ? <MdCheckCircle size={16} /> : <MdBlock size={16} />}
+                             </Button>
+                             <Button variant="outline-danger" size="sm" onClick={() => handleDeleteUser(u.id)} disabled={u.is_admin}>
+                                <MdDelete size={16} />
+                             </Button>
+                          </div>
+                       </td>
                    </tr>
                 ))}
               </tbody>
