@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import './Auth.css';
 
 const Register = () => {
+  const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -16,7 +17,8 @@ const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const result = await register({ 
-      name: username, 
+      name,
+      username, 
       email, 
       password,
       password_confirmation: password 
@@ -37,12 +39,22 @@ const Register = () => {
       >
         <div className="auth-header">
           <h1 className="gradient-text">Join Us</h1>
-          <p>Create your Antigravity account today</p>
+          <p>Create your  account today</p>
         </div>
         
         {error && <div className="auth-error">{error}</div>}
         
         <form onSubmit={handleSubmit} className="auth-form">
+          <div className="input-group">
+            <User className="input-icon" size={20} />
+            <input 
+              type="text" 
+              placeholder="Full Name" 
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required 
+            />
+          </div>
           <div className="input-group">
             <AtSign className="input-icon" size={20} />
             <input 
@@ -73,6 +85,7 @@ const Register = () => {
               required 
             />
           </div>
+
           <button type="submit" className="auth-btn gradient-btn">
             <span>Register</span>
             <ArrowRight size={20} />
