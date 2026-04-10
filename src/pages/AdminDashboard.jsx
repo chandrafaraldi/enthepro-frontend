@@ -56,6 +56,30 @@ export default function AdminDashboard() {
     init();
   }, []);
 
+  const handleToggleBlock = async (user) => {
+    const action = user.is_blocked ? "Buka Blokir" : "Blokir";
+    const result = await Swal.fire({
+      title: `${action} Pengguna?`,
+      text: `User ini ${user.is_blocked ? 'akan bisa login kembali' : 'tidak akan bisa login'}.`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: user.is_blocked ? "#10b981" : "#d33",
+      confirmButtonText: `Ya, ${action}!`,
+      background: "#1e1e1e",
+      color: "#fff",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await api.post(`/admin/users/${user.id}/toggle-block`);
+        Swal.fire("Berhasil", `Status user diperbarui`, "success");
+        fetchUsers();
+      } catch (error) {
+        Swal.fire("Error", "Gagal memproses blokir", "error");
+      }
+    }
+  };
+
   const handleDeleteUser = async (userId) => {
     const result = await Swal.fire({
       title: "Hapus Pengguna?",
