@@ -1,5 +1,5 @@
 {
-  "name": "frontend-sosial-media",
+  "name": "latihan-fe-sosmed",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -11,13 +11,17 @@
   },
   "dependencies": {
     "axios": "^1.14.0",
+    "bootstrap": "^5.3.3",
     "clsx": "^2.1.1",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.7.0",
     "nanoid": "^5.1.7",
     "react": "^19.2.4",
+    "react-bootstrap": "^2.10.10",
     "react-dom": "^19.2.4",
+    "react-icons": "^5.6.0",
     "react-router-dom": "^7.14.0",
+    "sweetalert2": "^11.26.24",
     "tailwind-merge": "^3.5.0"
   },
   "devDependencies": {
